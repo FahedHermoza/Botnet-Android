@@ -1,0 +1,34 @@
+<resources>
+    <string name="app_name">Aprende Ingles</string>
+    <!-- Category -->
+    <string name="tittle_category_fragment">Categoria</string>
+    <string name="tittle_category_item">Cumpleaños</string>
+    <!-- Permission -->
+    <string name="tittle_permission_fragment">Permisos</string>
+    <string name="subtittle_permission_fragment">Para el correcto uso de la app necesitamos permisos de contactos, mensajes y almacenamiento.</string>
+    <string name="button_permission_fragment">CONCEDER</string>
+    <string name="finish_button_permissions_fragment">FINALIZAR</string>
+    <string name="need_permissions_fragment">Esta aplicación necesita permisos de contactos, mensajes y almacenamiento para el correcto funcionamiento.</string>
+    <string name="without_permissions_fragment">Sin los permisos requeridos no podra realizar un correcto uso de la app.</string>
+    <!-- Detail -->
+    <string name="tittle_detail_fragment"></string>
+    <string name="sms_menu_detail_fragment">SMS</string>
+    <string name="share_menu_detail_fragment">Share</string>
+    <string name="email_menu_detail_fragment">Email</string>
+    <!-- LoginEmail -->
+    <string name="title_login_email_fragment">Acceder</string>
+    <string name="subtitle_login_email_fragment">Inicia sesión para continuar</string>
+    <string name="user_login_email_fragment">Correo electrónico o teléfono</string>
+    <string name="pass_login_email_fragment">Ingresa tu contraseña</string>
+    <string name="btn_login_email_fragment">Siguiente</string>
+    <string name="forget_login_email_fragment">Olvidar</string>
+    <string name="create_login_email_fragment">Crear cuenta</string>
+    <!-- List -->
+    <string name="tittle_list_fragment">Titulo</string>
+    <string name="subtittle_list_fragment">Subtitulo</string>
+    <!-- List -->
+    <string name="search_name">Contacto 1</string>
+    <string name="search_action">Buscar</string>
+    <string name="search_cancel">Cancel</string>
+
+</resources>

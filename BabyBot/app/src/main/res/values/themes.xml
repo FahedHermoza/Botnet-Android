@@ -1,0 +1,20 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <!-- Base application theme.
+        https://medium.com/over-engineering/setting-up-a-material-components-theme-for-android-fbf7774da739
+    -->
+    <style name="Theme.BabyBot" parent="Theme.MaterialComponents.Light">
+        <!-- Primary brand color. -->
+        <item name="colorPrimary">@color/white</item>
+        <item name="colorPrimaryVariant">@color/lightGreen</item>
+        <item name="colorOnPrimary">@color/black</item>
+        <!-- Secondary brand color. -->
+        <item name="colorSecondary">@color/shyniGreen</item>
+        <item name="colorSecondaryVariant">@color/shyniGreen</item>
+        <item name="colorOnSecondary">@color/black</item>
+        <!-- Status bar color. -->
+        <item name="android:statusBarColor" tools:targetApi="l">?attr/colorPrimaryVariant</item>
+
+        <item name="colorOnBackground">@color/black</item>
+        <!-- Customize your theme here. -->
+    </style>
+</resources>
