@@ -1,28 +1,32 @@
 package com.company.app.fakeapp.ui.list
 
-import android.view.View
+import android.view.LayoutInflater
 import android.view.ViewGroup
-import android.widget.ImageView
-import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
-import com.company.app.fakeapp.R
+import com.company.app.fakeapp.databinding.ItemPhraseBinding
 import com.company.app.fakeapp.model.Phrase
-import com.company.app.fakeapp.utils.inflate
-import kotlinx.android.synthetic.main.item_category.view.*
 
 class PhraseAdapter(private var phrases:List<Phrase>,
                     val itemAction: (item: Phrase) -> Unit)
     :RecyclerView.Adapter<PhraseAdapter.ViewHolder>(){
 
     override fun onCreateViewHolder(parent: ViewGroup, p1: Int): ViewHolder {
-        return ViewHolder(
-            parent.inflate(R.layout.item_phrase)
-        )
+        var itemBinding: ItemPhraseBinding = ItemPhraseBinding.inflate(LayoutInflater.from(parent.context), parent, false)
+        return ViewHolder(itemBinding)
     }
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         //render
-        holder.bind(phrases[position])
+        with(holder){
+            with(phrases[position]) {
+                binding.root.setOnClickListener {
+                    itemAction(this)
+                }
+
+                binding.textViewNameItemCategory.text = description
+                binding.imageViewItemCategory.setImageResource(photo)
+            }
+        }
     }
 
     override fun getItemCount(): Int {
@@ -34,18 +38,6 @@ class PhraseAdapter(private var phrases:List<Phrase>,
         notifyDataSetChanged()
     }
 
-    inner class ViewHolder(private val view: View) : RecyclerView.ViewHolder(view){
-
-        private val textViewName:TextView = view.textViewNameItemCategory
-        private val imageView:ImageView = view.imageViewItemCategory
-
-        fun bind(phrase: Phrase){
-            textViewName.text = phrase.description
-            imageView.setImageResource(phrase.photo)
-
-            view.setOnClickListener {
-                itemAction(phrase)
-            }
-        }
-    }
+    inner class ViewHolder(val binding: ItemPhraseBinding)
+        :RecyclerView.ViewHolder(binding.root)
 }

@@ -17,11 +17,11 @@ import androidx.core.graphics.drawable.toBitmap
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
 import com.company.app.fakeapp.R
+import com.company.app.fakeapp.databinding.DetailFragmentBinding
 import com.company.app.fakeapp.model.ContactPhone
 import com.company.app.fakeapp.model.Phrase
 import com.company.app.fakeapp.viewmodel.DetailViewModel
 import com.company.app.fakeapp.ui.search.SearchActivity
-import kotlinx.android.synthetic.main.detail_fragment.*
 import java.lang.Exception
 /***
  * https://stackoverflow.com/questions/7661875/how-to-use-share-image-using-sharing-intent-to-share-images-in-android
@@ -37,10 +37,15 @@ class DetailFragment : Fragment() {
     private var idPhrase: Int = 1
     private lateinit var phrase: Phrase
 
+    private var _binding: DetailFragmentBinding? = null
+    private val binding get() = _binding!!
+
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,
                               savedInstanceState: Bundle?): View {
         setHasOptionsMenu(true)
-        return inflater.inflate(R.layout.detail_fragment, container, false)
+        _binding = DetailFragmentBinding.inflate(inflater, container, false)
+        val view = binding.root
+        return view
     }
 
     private fun getAnswer(){
@@ -60,8 +65,8 @@ class DetailFragment : Fragment() {
     private fun setupViewModel() {
         viewModel.phrase.observe(viewLifecycleOwner, Observer {
             phrase = it as Phrase
-            ivPhoto.setImageResource(phrase.photo)
-            tvDescription.text = phrase.description
+            binding.ivPhoto.setImageResource(phrase.photo)
+            binding.tvDescription.text = phrase.description
         })
     }
 
@@ -251,6 +256,11 @@ class DetailFragment : Fragment() {
             }
             else -> startActivity(intent)
         }
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _binding = null
     }
 }
 

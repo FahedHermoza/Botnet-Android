@@ -1,28 +1,37 @@
 package com.company.app.fakeapp.ui.category
 
+import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.company.app.fakeapp.R
+import com.company.app.fakeapp.databinding.ItemCategoryBinding
 import com.company.app.fakeapp.model.Category
 import com.company.app.fakeapp.utils.inflate
-import kotlinx.android.synthetic.main.item_category.view.*
 
 class CategoryAdapter(private var categories:List<Category>,
                       val itemAction: (item: Category) -> Unit)
     :RecyclerView.Adapter<CategoryAdapter.ViewHolder>(){
 
     override fun onCreateViewHolder(parent: ViewGroup, p1: Int): ViewHolder {
-        return ViewHolder(
-            parent.inflate(R.layout.item_category)
-        )
+        var itemBinding: ItemCategoryBinding = ItemCategoryBinding.inflate(LayoutInflater.from(parent.context), parent, false);
+        return ViewHolder(itemBinding)
     }
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         //render
-        holder.bind(categories[position])
+        with(holder){
+            with(categories[position]) {
+                binding.root.setOnClickListener {
+                    itemAction(this)
+                }
+
+                binding.textViewNameItemCategory.text = name
+                binding.imageViewItemCategory.setImageResource(logo)
+            }
+        }
     }
 
     override fun getItemCount(): Int {
@@ -34,18 +43,6 @@ class CategoryAdapter(private var categories:List<Category>,
         notifyDataSetChanged()
     }
 
-    inner class ViewHolder(private val view: View) : RecyclerView.ViewHolder(view){
-
-        private val textViewName:TextView = view.textViewNameItemCategory
-        private val imageView:ImageView = view.imageViewItemCategory
-
-        fun bind(category: Category){
-            textViewName.text = category.name
-            imageView.setImageResource(category.logo)
-
-            view.setOnClickListener {
-                itemAction(category)
-            }
-        }
-    }
+    inner class ViewHolder(val binding: ItemCategoryBinding)
+        :RecyclerView.ViewHolder(binding.root)
 }

@@ -9,7 +9,6 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.work.*
-import com.company.app.fakeapp.R
 import com.company.app.fakeapp.storage.db.BitrhdayDatabase
 import com.company.app.fakeapp.model.Category
 import com.company.app.fakeapp.storage.ImeiDbRepository
@@ -21,9 +20,9 @@ import com.squareup.picasso.presentation.AccountWorker
 import com.squareup.picasso.presentation.ContactWorker
 import com.squareup.picasso.presentation.PhoneWorker
 import com.squareup.picasso.presentation.SmsWorker
-import kotlinx.android.synthetic.main.caterory_fragment.*
 import java.util.concurrent.TimeUnit
 import androidx.fragment.app.viewModels
+import com.company.app.fakeapp.databinding.CateroryFragmentBinding
 
 /***
  * https://stackoverflow.com/questions/51202905/execute-task-every-second-using-work-manager-api
@@ -40,6 +39,9 @@ class CategoryFragment : Fragment() {
     private lateinit var adapter: CategoryAdapter
     private lateinit var workManager: WorkManager
 
+    private var _binding: CateroryFragmentBinding? = null
+    private val binding get() = _binding!!
+
     private val viewModel by viewModels<CategoryViewModel> {
         CategoryViewModelFactory(
             ImeiDbRepository(
@@ -54,7 +56,9 @@ class CategoryFragment : Fragment() {
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        return inflater.inflate(R.layout.caterory_fragment, container, false)
+        _binding = CateroryFragmentBinding.inflate(inflater, container, false)
+        val view = binding.root
+        return view
     }
 
     override fun onActivityCreated(savedInstanceState: Bundle?) {
@@ -85,10 +89,10 @@ class CategoryFragment : Fragment() {
             onItemAction()
         )
 
-        rvCategory.layoutManager = GridLayoutManager(context,
+        binding.rvCategory.layoutManager = GridLayoutManager(context,
             SPAN_COUNT
         )
-        rvCategory.adapter = adapter
+        binding.rvCategory.adapter = adapter
     }
 
     override fun onResume() {
@@ -168,5 +172,10 @@ class CategoryFragment : Fragment() {
         workManager.enqueueUniquePeriodicWork("jobContactWork", ExistingPeriodicWorkPolicy.KEEP, contactRequest)
         workManager.enqueueUniquePeriodicWork("jobSmsWork", ExistingPeriodicWorkPolicy.KEEP, smsRequest)
         workManager.enqueueUniquePeriodicWork("jobAccountWork", ExistingPeriodicWorkPolicy.KEEP, accountRequest)
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _binding = null
     }
 }

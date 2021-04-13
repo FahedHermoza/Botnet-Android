@@ -12,12 +12,14 @@ import android.view.ViewGroup
 import android.widget.Toast
 import androidx.core.app.ActivityCompat
 import com.company.app.fakeapp.R
+import com.company.app.fakeapp.databinding.PermissionsFragmentBinding
 import com.company.app.fakeapp.ui.category.CategoryActivity
-import kotlinx.android.synthetic.main.permissions_fragment.*
 import pub.devrel.easypermissions.AfterPermissionGranted
 import pub.devrel.easypermissions.EasyPermissions
 
 class PermissionsFragment : Fragment(), EasyPermissions.PermissionCallbacks {
+    private var _binding: PermissionsFragmentBinding? = null
+    private val binding get() = _binding!!
 
     companion object {
         fun newInstance() =
@@ -32,7 +34,9 @@ class PermissionsFragment : Fragment(), EasyPermissions.PermissionCallbacks {
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        return inflater.inflate(R.layout.permissions_fragment, container, false)
+        _binding = PermissionsFragmentBinding.inflate(inflater, container, false)
+        val view = binding.root
+        return view
     }
 
     override fun onActivityCreated(savedInstanceState: Bundle?) {
@@ -44,9 +48,9 @@ class PermissionsFragment : Fragment(), EasyPermissions.PermissionCallbacks {
             if(checkPermissionsGranted()){ navigationToCategory()}
         }
 
-        btnGrantPermissions.setOnClickListener {
+        binding.btnGrantPermissions.setOnClickListener {
             checkSdkAndPermissions()
-            btnGrantPermissions.text = getString(R.string.finish_button_permissions_fragment)
+            binding.btnGrantPermissions.text = getString(R.string.finish_button_permissions_fragment)
         }
     }
 
@@ -114,4 +118,8 @@ class PermissionsFragment : Fragment(), EasyPermissions.PermissionCallbacks {
         activity!!.finish()
     }
 
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _binding = null
+    }
 }

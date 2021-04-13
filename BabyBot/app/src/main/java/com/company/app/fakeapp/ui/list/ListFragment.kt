@@ -9,13 +9,11 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.lifecycle.Observer
 import androidx.recyclerview.widget.GridLayoutManager
-import com.company.app.fakeapp.R
+import com.company.app.fakeapp.databinding.ListFragmentBinding
 import com.company.app.fakeapp.model.Category
 import com.company.app.fakeapp.model.Phrase
 import com.company.app.fakeapp.ui.detail.DetailActivity
 import com.company.app.fakeapp.viewmodel.ListViewModel
-import kotlinx.android.synthetic.main.caterory_fragment.tvTitle
-import kotlinx.android.synthetic.main.list_fragment.*
 
 class ListFragment : Fragment() {
 
@@ -29,11 +27,16 @@ class ListFragment : Fragment() {
 
     private lateinit var nameCategory: String
 
+    private var _binding: ListFragmentBinding? = null
+    private val binding get() = _binding!!
+
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        return inflater.inflate(R.layout.list_fragment, container, false)
+        _binding = ListFragmentBinding.inflate(inflater, container, false)
+        val view = binding.root
+        return view
     }
 
     private fun getAnswer(){
@@ -60,8 +63,8 @@ class ListFragment : Fragment() {
 
     //observers
     private val renderCategory= Observer<Category> {
-        tvTitle.text = it.name
-        tvSubTitle.text = it.description
+        binding.tvTitle.text = it.name
+        binding.tvSubTitle.text = it.description
     }
 
     private val renderPhrases= Observer<List<Phrase>> {
@@ -73,10 +76,10 @@ class ListFragment : Fragment() {
             emptyList(),
             onItemAction()
         )
-        rvListPhrase.layoutManager = GridLayoutManager(context,
+        binding.rvListPhrase.layoutManager = GridLayoutManager(context,
             SPAN_COUNT
         )
-        rvListPhrase.adapter = adapter
+        binding.rvListPhrase.adapter = adapter
     }
 
     private fun onItemAction(): (item: Phrase) -> Unit {
@@ -94,4 +97,8 @@ class ListFragment : Fragment() {
         startActivity(intent)
     }
 
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _binding = null
+    }
 }

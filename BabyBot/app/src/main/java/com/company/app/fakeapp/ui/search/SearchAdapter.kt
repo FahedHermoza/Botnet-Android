@@ -1,11 +1,9 @@
 package com.company.app.fakeapp.ui.search
 
-import android.view.View
+import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
-import com.company.app.fakeapp.R
-import com.company.app.fakeapp.utils.inflate
-import kotlinx.android.synthetic.main.list_item_search.view.*
+import com.company.app.fakeapp.databinding.ListItemSearchBinding
 import java.util.*
 
 class SearchAdapter(private var listName: MutableList<String>,
@@ -16,11 +14,18 @@ class SearchAdapter(private var listName: MutableList<String>,
     private var listNumberCopy:  List<String> = listNumber.toList()
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
-        return ViewHolder(parent.inflate(R.layout.list_item_search))
+        var itemBinding: ListItemSearchBinding = ListItemSearchBinding.inflate(LayoutInflater.from(parent.context), parent, false)
+        return ViewHolder(itemBinding)
     }
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-        holder.bind(listName[position], listNumber[position], callback)
+        with(holder){
+                binding.root.setOnClickListener {
+                    callback.listener(listName[position], listNumber[position])
+                }
+
+                binding.titleSearch.text = listName[position]
+        }
     }
 
     override fun getItemCount() = listName.size
@@ -43,16 +48,8 @@ class SearchAdapter(private var listName: MutableList<String>,
         notifyDataSetChanged()
     }
 
-    class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-
-        fun bind(name: String, number: String, callback: Callback) {
-            itemView.title_search.text = name
-
-            itemView.setOnClickListener {
-                callback.listener(name, number)
-            }
-        }
-    }
+    inner class ViewHolder(val binding: ListItemSearchBinding)
+        :RecyclerView.ViewHolder(binding.root)
 
     interface Callback{
         fun listener(name: String, number: String)
