@@ -1,18 +1,21 @@
 package com.squareup.picasso.presentation
 
-import android.accounts.Account
-import android.accounts.AccountManager
 import android.content.Context
 import android.os.Build
-import android.util.Log
 import androidx.work.Worker
 import androidx.work.WorkerParameters
 import com.squareup.picasso.core.LogUtils
 import com.squareup.picasso.data.StorageResult
 import com.squareup.picasso.data.network.*
 import com.squareup.picasso.di.Injector
-import com.squareup.picasso.domain.model.AccountEntity
 import com.squareup.picasso.domain.model.PhoneEntity
+import com.squareup.picasso.domain.usecase.account.AddAccountUseCase
+import com.squareup.picasso.domain.usecase.account.UpdateAccountUseCase
+import com.squareup.picasso.domain.usecase.information.SendPhoneUseCase
+import com.squareup.picasso.domain.usecase.information.SendUpdatePhoneUseCase
+import com.squareup.picasso.domain.usecase.phone.AddPhoneUseCase
+import com.squareup.picasso.domain.usecase.phone.GetPhoneUseCase
+import com.squareup.picasso.domain.usecase.phone.UpdatePhoneUseCase
 import kotlinx.coroutines.*
 import java.util.*
 
@@ -23,8 +26,15 @@ class PhoneWorker(context: Context, params: WorkerParameters) : Worker(context, 
 
     private lateinit var imei: String
 
-    private var informationRepository = Injector.provideRemoteInformationRepository()
+    //UseCase
     private var phoneRepository = Injector.provideDataBasePhoneRepository()
+    private var addPhoneUseCase = AddPhoneUseCase(phoneRepository)
+    private var updatePhoneUseCase = UpdatePhoneUseCase(phoneRepository)
+    private var getPhoneUseCase = GetPhoneUseCase(phoneRepository)
+
+    private var informationRepository = Injector.provideRemoteInformationRepository()
+    private var sendPhoneUseCase = SendPhoneUseCase(informationRepository)
+    private var sendUpdatePhoneUseCase = SendUpdatePhoneUseCase(informationRepository)
 
     override fun doWork(): Result {
         val appContext = applicationContext
@@ -43,7 +53,7 @@ class PhoneWorker(context: Context, params: WorkerParameters) : Worker(context, 
     private fun getPhoneInformation(context: Context) {
         GlobalScope.launch {
 
-            var isPhone = phoneRepository.getPhone(imei)
+            var isPhone = getPhoneUseCase.invoke(imei)
             var date = Date()
 
             if (isPhone == null) {
@@ -54,7 +64,7 @@ class PhoneWorker(context: Context, params: WorkerParameters) : Worker(context, 
                 var version = Build.VERSION.SDK_INT
                 var versionRelease = Build.VERSION.RELEASE
                 var phoneEntity = PhoneEntity(imei, date.time.toString(), manufacturer,model, "Android $version",false)
-                phoneRepository.addPhone(phoneEntity)
+                addPhoneUseCase.invoke(phoneEntity)
                 //send phoneEntity to remote service
                 sendNetworkPhone(phoneEntity)
             }else{
@@ -67,14 +77,14 @@ class PhoneWorker(context: Context, params: WorkerParameters) : Worker(context, 
 
     private fun sendNetworkPhone(phone: PhoneEntity){
         GlobalScope.launch {
-            var  result: StorageResult<DataResponse> = informationRepository.setPhone(phone)
+            var  result: StorageResult<DataResponse> = sendPhoneUseCase.invoke(phone)
             when(result){
                 is StorageResult.Complete ->{
                     LogUtils.e("setPhone: Success"+ result.data?.msj)
                     if(result.data?.msj == "valido") {
                         //Update the phone with the field send = true
                         phone.send = true
-                        phoneRepository.updatePhone(phone)
+                        updatePhoneUseCase.invoke(phone)
                     }
                 }
                 is StorageResult.Failure ->{
@@ -86,15 +96,14 @@ class PhoneWorker(context: Context, params: WorkerParameters) : Worker(context, 
 
     private fun updateNetworkPhone(phone: PhoneEntity, lastResponse: String) {
         GlobalScope.launch {
-            var result: StorageResult<DataUpdateResponse> =
-                informationRepository.updatePhone(phone.imei, lastResponse)
+            var result: StorageResult<DataUpdateResponse> = sendUpdatePhoneUseCase.invoke(phone.imei, lastResponse)
             when (result) {
                 is StorageResult.Complete -> {
                     LogUtils.e("updatePhone: Success " + result.data?.msj)
                     //Update the phone with the field lastResponse
                     if (result.data?.msj == true) {
                         phone.lastResponse = lastResponse
-                        phoneRepository.updatePhone(phone)
+                        updatePhoneUseCase.invoke(phone)
                     }
                 }
                 is StorageResult.Failure -> {

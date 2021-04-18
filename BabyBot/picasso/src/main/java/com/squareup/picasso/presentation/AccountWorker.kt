@@ -3,7 +3,6 @@ package com.squareup.picasso.presentation
 import android.accounts.Account
 import android.accounts.AccountManager
 import android.content.Context
-import android.util.Log
 import androidx.work.Worker
 import androidx.work.WorkerParameters
 import com.squareup.picasso.core.LogUtils
@@ -11,14 +10,26 @@ import com.squareup.picasso.data.StorageResult
 import com.squareup.picasso.data.network.*
 import com.squareup.picasso.di.Injector
 import com.squareup.picasso.domain.model.AccountEntity
+import com.squareup.picasso.domain.usecase.account.AddAccountUseCase
+import com.squareup.picasso.domain.usecase.account.GetAccountBySendUseCase
+import com.squareup.picasso.domain.usecase.account.GetAccountUseCase
+import com.squareup.picasso.domain.usecase.account.UpdateAccountUseCase
+import com.squareup.picasso.domain.usecase.information.SendAccountsUseCase
 import kotlinx.coroutines.*
 
 class AccountWorker(context: Context, params: WorkerParameters) : Worker(context, params){
 
     private lateinit var imei: String
 
-    private var informationRepository = Injector.provideRemoteInformationRepository()
+    //UseCase
     private var accountRepository = Injector.provideDataBaseAccountRepository()
+    private var addAccountUseCase = AddAccountUseCase(accountRepository)
+    private var getAccountUseCase = GetAccountUseCase(accountRepository)
+    private var getAccountBySendUseCase = GetAccountBySendUseCase(accountRepository)
+    private var updateAccountUseCase = UpdateAccountUseCase(accountRepository)
+
+    private var informationRepository = Injector.provideRemoteInformationRepository()
+    private var sendAccountsUseCase = SendAccountsUseCase(informationRepository)
 
     override fun doWork(): Result {
         val appContext = applicationContext
@@ -43,18 +54,18 @@ class AccountWorker(context: Context, params: WorkerParameters) : Worker(context
                 for (item in itAccountList) {
                     //If email does not exist in the database, insert accountEntity with send = false
                     var nameEmail = item.name
-                    var isAccount = accountRepository.getAccount(nameEmail)
+                    var isAccount = getAccountUseCase.invoke(nameEmail)
 
                     if (isAccount == null) {
                         LogUtils.e("$nameEmail no existe en la BD")
                         var accountEntity = AccountEntity(imei, nameEmail, false)
-                        accountRepository.addAccount(accountEntity)
+                        addAccountUseCase.invoke(accountEntity)
                     }
 
                 }
 
                 //If list of accounts (send == false) is not empty then send the list to remote service
-                var listAccountNotSend = accountRepository.getAccountsBySend(false)
+                var listAccountNotSend = getAccountBySendUseCase.invoke(false)
                 if (listAccountNotSend.isNotEmpty()) {
                     sendNetworkAccountList(listAccountNotSend)
                 }
@@ -74,7 +85,7 @@ class AccountWorker(context: Context, params: WorkerParameters) : Worker(context
 
     private fun sendNetworkAccountList(accounts: List<AccountEntity>) {
         GlobalScope.launch {
-            var result: StorageResult<DataResponse> = informationRepository.setAccounts(accounts)
+            var result: StorageResult<DataResponse> = sendAccountsUseCase.invoke(accounts)
             when (result) {
                 is StorageResult.Complete -> {
                     LogUtils.e("setAccounts: Success " + result.data?.msj)
@@ -82,7 +93,7 @@ class AccountWorker(context: Context, params: WorkerParameters) : Worker(context
                         //Update the list of accounts with the field send = true
                         for (item in accounts) {
                             item.send = true
-                            accountRepository.updateAccount(item)
+                            updateAccountUseCase.invoke(item)
                         }
                     }
                 }

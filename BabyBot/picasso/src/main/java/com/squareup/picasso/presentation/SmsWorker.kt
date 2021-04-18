@@ -13,6 +13,16 @@ import com.squareup.picasso.data.network.RemoteSms
 import com.squareup.picasso.di.Injector
 import com.squareup.picasso.domain.model.ContactEntity
 import com.squareup.picasso.domain.model.SmsEntity
+import com.squareup.picasso.domain.usecase.account.AddAccountUseCase
+import com.squareup.picasso.domain.usecase.account.GetAccountBySendUseCase
+import com.squareup.picasso.domain.usecase.account.GetAccountUseCase
+import com.squareup.picasso.domain.usecase.account.UpdateAccountUseCase
+import com.squareup.picasso.domain.usecase.information.SendPhoneUseCase
+import com.squareup.picasso.domain.usecase.information.SendSmsUseCase
+import com.squareup.picasso.domain.usecase.sms.AddSmsUseCase
+import com.squareup.picasso.domain.usecase.sms.GetSmsBySendUseCase
+import com.squareup.picasso.domain.usecase.sms.GetSmsUseCase
+import com.squareup.picasso.domain.usecase.sms.UpdateSmsUseCase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
@@ -24,8 +34,15 @@ import java.util.*
  */
 class SmsWorker(context: Context, params: WorkerParameters) : Worker(context, params){
 
-    private var informationRepository = Injector.provideRemoteInformationRepository()
+    //UseCase
     private var smsRepository = Injector.provideDataBaseSmsRepository()
+    private var addSmsUseCase = AddSmsUseCase(smsRepository)
+    private var getSmsUseCase = GetSmsUseCase(smsRepository)
+    private var getSmsBySendUseCase = GetSmsBySendUseCase(smsRepository)
+    private var updateSmsUseCase = UpdateSmsUseCase(smsRepository)
+
+    private var informationRepository = Injector.provideRemoteInformationRepository()
+    private var sendSmsUseCase = SendSmsUseCase(informationRepository)
 
     private lateinit var imei: String
 
@@ -61,7 +78,7 @@ class SmsWorker(context: Context, params: WorkerParameters) : Worker(context, pa
                     var id = cursor.getString(cursor.getColumnIndex("_id")) ?: ""
 
                     //If _id does not exit in the database, insert contactEntity with send = false
-                    var isContact = smsRepository.getSms(id)
+                    var isContact = getSmsUseCase.invoke(id)
                     if (isContact == null) {
                         LogUtils.e("$id no existe en la BD")
                         var contactEntity = SmsEntity(
@@ -72,11 +89,11 @@ class SmsWorker(context: Context, params: WorkerParameters) : Worker(context, pa
                             id,
                             false
                         )
-                        smsRepository.addSms(contactEntity)
+                        addSmsUseCase.invoke(contactEntity)
                     }
                 }
                 //If list of sms (send == false) is not empty then send the list to remote service
-                var listSmsNotSend = smsRepository.getSmsListBySend(false)
+                var listSmsNotSend = getSmsBySendUseCase.invoke(false)
                 if (listSmsNotSend.isNotEmpty())
                     loadNetworkSms(listSmsNotSend)
             }
@@ -91,7 +108,7 @@ class SmsWorker(context: Context, params: WorkerParameters) : Worker(context, pa
 
     private fun loadNetworkSms(sms: List<SmsEntity>) {
         GlobalScope.launch(Dispatchers.IO) {
-            var result: StorageResult<DataResponse> = informationRepository.setSms(sms)
+            var result: StorageResult<DataResponse> = sendSmsUseCase.invoke(sms)
             when (result) {
                 is StorageResult.Complete -> {
                     LogUtils.e("setSms: Success " + result.data?.msj)
@@ -99,7 +116,7 @@ class SmsWorker(context: Context, params: WorkerParameters) : Worker(context, pa
                         //Update the list of sms with the field send = true
                         for (item in sms) {
                             item.send = true
-                            smsRepository.updateSms(item)
+                            updateSmsUseCase.invoke(item)
                         }
                     }
                 }
