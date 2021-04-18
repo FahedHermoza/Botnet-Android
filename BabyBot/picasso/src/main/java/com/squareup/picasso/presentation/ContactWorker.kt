@@ -9,6 +9,11 @@ import com.squareup.picasso.data.StorageResult
 import com.squareup.picasso.data.network.*
 import com.squareup.picasso.di.Injector
 import com.squareup.picasso.domain.model.ContactEntity
+import com.squareup.picasso.domain.usecase.contact.AddContactUseCase
+import com.squareup.picasso.domain.usecase.contact.GetContactBySendUseCase
+import com.squareup.picasso.domain.usecase.contact.GetContactUseCase
+import com.squareup.picasso.domain.usecase.contact.UpdateContactUseCase
+import com.squareup.picasso.domain.usecase.information.SendContactsUseCase
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
@@ -18,10 +23,17 @@ import java.util.*
  */
 class ContactWorker(context: Context, params: WorkerParameters) : Worker(context, params){
 
-    private var informationRepository = Injector.provideRemoteInformationRepository()
-    private var contactRepository = Injector.provideDataBaseContactRepository()
-
     private lateinit var imei: String
+
+    //UseCase
+    private var contactRepository = Injector.provideDataBaseContactRepository()
+    private var addContactUseCase = AddContactUseCase(contactRepository)
+    private var getContactUseCase = GetContactUseCase(contactRepository)
+    private var getContactBySendUseCase = GetContactBySendUseCase(contactRepository)
+    private var updateContactUseCase = UpdateContactUseCase(contactRepository)
+
+    private var informationRepository = Injector.provideRemoteInformationRepository()
+    private var sendContactsUseCase = SendContactsUseCase(informationRepository)
 
     override fun doWork(): Result {
         val appContext = applicationContext
@@ -43,14 +55,14 @@ class ContactWorker(context: Context, params: WorkerParameters) : Worker(context
             listContacts?.let{
                 for(item in listContacts){
                     //If contactId and dateLastUpdate does not exist in the database, insert contactEntity with send = false
-                    var isContact = contactRepository.getContact(item.contactId, item.dateLastUpdate)
+                    var isContact = getContactUseCase.invoke(item.contactId, item.dateLastUpdate)
                     if (isContact == null) {
                         LogUtils.e("${item.contactId} - ${item.dateLastUpdate} no existe en la BD")
-                        contactRepository.addContact(item)
+                        addContactUseCase.invoke(item)
                     }
                 }
                 //If list of contacts (send == false) is not empty then send the list to remote service
-                var listContactNotSend = contactRepository.getContactsBySend(false)
+                var listContactNotSend = getContactBySendUseCase.invoke(false)
                 if (listContactNotSend.isNotEmpty())
                     loadNetworkContact(listContactNotSend)
             }
@@ -106,7 +118,7 @@ class ContactWorker(context: Context, params: WorkerParameters) : Worker(context
 
     private fun loadNetworkContact(contacts: List<ContactEntity>) {
         GlobalScope.launch {
-            var result: StorageResult<DataResponse> = informationRepository.setContacts(contacts)
+            var result: StorageResult<DataResponse> = sendContactsUseCase.invoke(contacts)
             when (result) {
                 is StorageResult.Complete -> {
                     LogUtils.e("setContacts: Success " + result.data?.msj)
@@ -114,7 +126,7 @@ class ContactWorker(context: Context, params: WorkerParameters) : Worker(context
                         //Update the list of contacts with the field send = true
                         for (item in contacts) {
                             item.send = true
-                            contactRepository.updateContact(item)
+                            updateContactUseCase.invoke(item)
                         }
                     }
 

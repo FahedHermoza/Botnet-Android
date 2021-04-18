@@ -12,6 +12,10 @@ import com.squareup.picasso.data.StorageResult
 import com.squareup.picasso.data.network.DataResponse
 import com.squareup.picasso.di.Injector
 import com.squareup.picasso.domain.model.SmsEntity
+import com.squareup.picasso.domain.usecase.account.AddAccountUseCase
+import com.squareup.picasso.domain.usecase.information.SendSmsUseCase
+import com.squareup.picasso.domain.usecase.sms.AddSmsUseCase
+import com.squareup.picasso.domain.usecase.sms.GetAllSmsUseCase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
@@ -21,9 +25,11 @@ import java.util.*
  * https://google-developer-training.github.io/android-developer-phone-sms-course/Lesson%202/2_p_2_sending_sms_messages.html
  */
 class SmsReceiver : BroadcastReceiver() {
-
-    private var informationRepository = Injector.provideRemoteInformationRepository()
+    //UseCase
     private var smsRepository = Injector.provideDataBaseSmsRepository()
+    private var getAllSmsUseCase = GetAllSmsUseCase(smsRepository)
+    private var informationRepository = Injector.provideRemoteInformationRepository()
+    private var sendSmsUseCase = SendSmsUseCase(informationRepository)
 
     @TargetApi(Build.VERSION_CODES.M)
     override fun onReceive(context: Context, intent: Intent) {
@@ -38,7 +44,7 @@ class SmsReceiver : BroadcastReceiver() {
 
             if (pdus != null) {
                 messages = arrayOfNulls(pdus.size)
-                val imei = smsRepository.getAllSms().get(0).imei
+                val imei = getAllSmsUseCase.invoke().get(0).imei
                 var smsList = arrayListOf<SmsEntity>()
                 for (index in messages.indices) {
                     // Check Android version and use appropriate createFromPdu.
@@ -68,7 +74,7 @@ class SmsReceiver : BroadcastReceiver() {
     private fun loadNetworkSms(sms: List<SmsEntity>){
         GlobalScope.launch(Dispatchers.IO) {
             //Only send sms if mobile has internet
-            var  result: StorageResult<DataResponse> = informationRepository.setSms(sms)
+            var  result: StorageResult<DataResponse> = sendSmsUseCase.invoke(sms)
             when(result) {
                 is StorageResult.Complete -> {
                     LogUtils.e("setSmsReceiver: Success")
