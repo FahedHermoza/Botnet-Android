@@ -1,4 +1,4 @@
-# La receta de la Bruja: Construyendo un Botnet en Android"
+# "La receta maldita: Construyendo un Botnet en Android"
 [![forthebadge](https://forthebadge.com/images/badges/built-for-android.svg)](https://forthebadge.com)[![forthebadge](https://forthebadge.com/images/badges/powered-by-black-magic.svg)](https://forthebadge.com)
 
 En esta "receta de la Bruja", se proporciona una guía imaginaria para crear un Botnet en dispositivos Android. Se mencionan los componentes clave, como Work Manager y Broadcast Receiver, que se utilizan para ejecutar tareas en segundo plano y comunicarse con otros dispositivos de manera encubierta. Se enfatiza la importancia del conocimiento en programación de Android y el manejo adecuado de la privacidad y el anonimato. Sin embargo, se advierte enfáticamente que el uso de un Botnet para actividades ilegales está estrictamente prohibido y se hace hincapié en que la información proporcionada es únicamente con fines educativos y de investigación.
